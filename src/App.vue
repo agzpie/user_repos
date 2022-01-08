@@ -10,17 +10,14 @@
       placeholder="github user name here"
     />
     <button class="accept-button" @click="userName = name; isActive = false">OK</button>
-     
+    
 
     <h4 :class="{inactive:isActive}">
       The most popular repositories of {{ userName }}:
     </h4>
 
-
-    
-
       <ListElement 
-        v-for="lib in data" 
+        v-for="lib in orderedList" 
         :key="lib.name" 
         :repository-name="lib.name" 
         :description="lib.description"
@@ -28,15 +25,12 @@
       </ListElement>
 
      <!-- <li v-for="lib in data" :key="lib.name" >{{lib.name}}</li> -->
-    
-
   </div>
 </template>
 
 <script>
 import ListElement from './components/ListElement';
-import { ref, reactive, toRefs, watchEffect } from "vue";
-//import ListElementVue from './components/ListElement.vue';
+import { ref, reactive, toRefs, watchEffect, computed } from "vue";
 export default {
   name: "App",
 
@@ -47,8 +41,8 @@ export default {
   setup() {
     const name = ref(null);
     const userName = ref(null);
+    //const stargazers_count = ref(null);
     const state = reactive({ data: [] });
-   // const ListedElement = ListElement();
 
     watchEffect(() => {
       if (userName.value){
@@ -58,9 +52,18 @@ export default {
             state.data = data;
             console.log("data", data);
             name.value = "";
-          });
-        //isClicked = true;
+        });
       }
+    });
+
+    //const order = ref('state.data.stargazers_count');
+    //const handleClick = () => {
+    //  order.value = ref('state.data.stargazers_count');
+    //};
+    const orderedList = computed(() => {
+      return [...state.data].sort((a, b) => {
+        return a.stargazers_count < b.stargazers_count ? 1 : -1;
+      });
     });
 
     return {
@@ -69,6 +72,7 @@ export default {
       userName,
       ListElement,
       ...toRefs(state),
+      orderedList
     };
   },
 };
@@ -106,7 +110,7 @@ body {
   color: white;
   font-weight: 600;
   background: rgb(34,158,94);
-background: radial-gradient(circle, #31a851 28%, rgba(31,149,52,1) 78%);
+  background: radial-gradient(circle, #31a851 28%, rgba(31,149,52,1) 78%);
   background-size: 100% auto;
   margin: 0.5rem 2rem;
   padding: 0.25rem 1.5rem;
@@ -115,9 +119,10 @@ background: radial-gradient(circle, #31a851 28%, rgba(31,149,52,1) 78%);
   transition: 0.3s all ease;
   cursor: pointer;
   box-shadow: 0 2px 10px rgb(217, 236, 220);
+  /* TODO button background is too high on hover */
 }
 .accept-button:hover {
-  background-size: 200%;
+  background-size: 170%;
   background-position: center;
   box-shadow: 0 6px 16px rgb(202, 226, 205);
   transform: translate(0px, -1px);

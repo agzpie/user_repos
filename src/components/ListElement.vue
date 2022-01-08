@@ -32,6 +32,7 @@ hr {
     font-weight: 600;
     font-size: 1rem;
     color: #0862CC;
+    /* TODO make repository name a link */
 }
 
 .svg {
@@ -43,6 +44,7 @@ hr {
     font-size: 0.8rem;
     font-weight: 500;
     color: #595959;
+    /* TODO make star golden on hover */
 }
 
 .desc {
