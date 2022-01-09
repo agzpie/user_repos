@@ -101,9 +101,7 @@ export default {
     // Sort list by star count
     const orderedList = computed(() => {
       if (state.data == 0) {
-        console.log(
-          "Somehow this user has no repositories. Don't be like this user."
-        );
+        return [];
       }
       return [...state.data].sort((a, b) => {
         return a.stargazers_count < b.stargazers_count ? 1 : -1;
