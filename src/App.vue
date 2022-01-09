@@ -73,29 +73,35 @@ export default {
         console.log("Username has invalid characters");
         return;
       }
-      
-      fetch(`https://api.github.com/users/${userName.value}/repos`)
-        .then((response) => {
-          if (response.ok) {
-            success.value = true;
-            return response.json();
-          }
-          success.value = false;
-          return Promise.reject(response);
-        })
-        .then((data) => {
-          state.data = data;
-          console.log("data", data);
-          name.value = "";
-        })
-        .catch((err) => {
-          if (err.status == 404) {
-            console.log("User not found");
-          } else {
-            console.log(err.message);
-            console.log("oh no (internet probably)!");
-          }
-        });      
+
+      let i = 0;
+      state.data = [];
+      while( i < 3) {
+        i++;
+        fetch(`https://api.github.com/users/${userName.value}/repos?per_page=5&page=${i}`)
+          .then((response) => {
+            if (response.ok) {
+              success.value = true;
+              // response.headers has Link? (rel=next)
+              return response.json();
+            }
+            success.value = false;
+            return Promise.reject(response);
+          })
+          .then((data) => {
+            state.data.push(...data);
+            console.log("data", data);
+            name.value = "";
+          })
+          .catch((err) => {
+            if (err.status == 404) {
+              console.log("User not found");
+            } else {
+              console.log(err.message);
+              console.log("oh no (internet probably)!");
+            }
+          });      
+      }      
     });
 
     // Sort list by star count
