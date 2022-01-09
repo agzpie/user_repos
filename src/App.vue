@@ -10,6 +10,7 @@
           id="user-name"
           name="user-name"
           placeholder="github user name here"
+          required
         />
       </div>
       <div class="btn-container">
@@ -25,8 +26,12 @@
       </div>
     </div>
 
-    <h4 :class="{ inactive: isActive }">
+    <h4 v-if="success == true">
       The most popular repositories of {{ userName }}:
+    </h4>
+    <h4 v-else-if="success == false" class="error-message">
+      Oopsie,<br />there was an error,<br />
+      but don't worry and try again!
     </h4>
 
     <ListElement
@@ -54,27 +59,59 @@ export default {
     const name = ref(null);
     const userName = ref(null);
     const state = reactive({ data: [] });
+    let success = ref(null);
+    const userNameValidator = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+    //let match = ref(null);
 
+    /*
+     * Check for input in the form and then fetch data
+     */
     watchEffect(() => {
       if (userName.value) {
-        fetch(`https://api.github.com/users/${userName.value}/repos`)
-          .then((response) => response.json())
-          .then((data) => {
-            state.data = data;
-            console.log("data", data);
-            name.value = "";
-          })
-          .catch(err => console.log(err.message))
+        if (userNameValidator.test(userName.value)) {
+          fetch(`https://api.github.com/users/${userName.value}/repos`)
+            .then((response) => {
+              if (response.ok) {
+                success.value = true;
+                return response.json();
+              }
+              success.value = false;
+              
+              return Promise.reject(response);
+            })
+            .then((data) => {
+              state.data = data;
+              console.log("data", data);
+              name.value = "";
+            })
+            .catch((err) => {
+              if (err.status == 404) {
+                console.log("User not found");
+              } else {
+                console.log("oh no (internet probably)!");
+              }
+              console.log(err.message);
+            });
+        } else {
+          console.log("Username has invalid characters");
+        }
       }
     });
 
+    // Sort list by star count
     const orderedList = computed(() => {
+      if (state.data == 0) {
+        console.log(
+          "Somehow this user has no repositories. Don't be like this user."
+        );
+      }
       return [...state.data].sort((a, b) => {
         return a.stargazers_count < b.stargazers_count ? 1 : -1;
       });
     });
 
     return {
+      success,
       isActive: true,
       name,
       userName,
@@ -97,7 +134,6 @@ body {
   color: #2c3e50;
   margin-top: 60px;
 }
-
 .main {
   width: fit-content;
   margin: auto;
@@ -109,11 +145,11 @@ body {
   transition-timing-function: ease;
   align-content: space-around;
 }
-
 .container {
   display: flex;
+  padding-top: 0.4rem;
+  padding-bottom: 0.8rem;
 }
-
 .form-container {
   align-self: flex-start;
   flex-grow: 1;
@@ -145,9 +181,9 @@ body {
   transform: translate(0px, -1px);
   letter-spacing: 0.05rem;
 }
-
-.inactive {
-  color: rgb(226, 226, 226);
+.error-message {
+  color: rgb(255, 0, 0);
+  text-decoration: underline;
   transition: 2s;
 }
 
@@ -161,5 +197,4 @@ body {
     align-items: center;
   }
 }
-
 </style>
