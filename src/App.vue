@@ -61,41 +61,41 @@ export default {
     const state = reactive({ data: [] });
     let success = ref(null);
     const userNameValidator = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
-    //let match = ref(null);
 
     /*
      * Check for input in the form and then fetch data
      */
     watchEffect(() => {
-      if (userName.value) {
-        if (userNameValidator.test(userName.value)) {
-          fetch(`https://api.github.com/users/${userName.value}/repos`)
-            .then((response) => {
-              if (response.ok) {
-                success.value = true;
-                return response.json();
-              }
-              success.value = false;
-              
-              return Promise.reject(response);
-            })
-            .then((data) => {
-              state.data = data;
-              console.log("data", data);
-              name.value = "";
-            })
-            .catch((err) => {
-              if (err.status == 404) {
-                console.log("User not found");
-              } else {
-                console.log("oh no (internet probably)!");
-              }
-              console.log(err.message);
-            });
-        } else {
-          console.log("Username has invalid characters");
-        }
+      if (!userName.value) 
+        return;
+
+      if (!userNameValidator.test(userName.value)) {
+        console.log("Username has invalid characters");
+        return;
       }
+      
+      fetch(`https://api.github.com/users/${userName.value}/repos`)
+        .then((response) => {
+          if (response.ok) {
+            success.value = true;
+            return response.json();
+          }
+          success.value = false;
+          return Promise.reject(response);
+        })
+        .then((data) => {
+          state.data = data;
+          console.log("data", data);
+          name.value = "";
+        })
+        .catch((err) => {
+          if (err.status == 404) {
+            console.log("User not found");
+          } else {
+            console.log(err.message);
+            console.log("oh no (internet probably)!");
+          }
+        });      
     });
 
     // Sort list by star count
