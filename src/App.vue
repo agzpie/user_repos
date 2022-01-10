@@ -63,10 +63,6 @@ export default {
     const userNameValidator = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
     const split1 = reactive({ spl1: []});
     const split2 = reactive({ spl2: []});
-    /*const dictionary = reactive({
-      "key1": "",
-      "key2": ""
-    });*/
 
     /*
      * Check for input in the form and then fetch data
@@ -83,32 +79,31 @@ watchEffect( () => {
       let hasNext = false;
       state.data = [];
       do {
-        let url = `https://api.github.com/users/${userName.value}/repos?per_page=5`;
+        let url = `https://api.github.com/users/${userName.value}/repos?per_page=30`;
         fetch(url)
           .then((response) => {
             if (response.ok) {
               success.value = true;
               // check response.headers for Link to get next page url
-              split1.spl1 = response.headers.get('Link').split(",");
+              let getLink = response.headers.get('Link');
+              if(getLink == null) {
+                return response.json();
+              }
+              split1.spl1 = getLink.split(",");
+            
               let j = 0;
               while(j < split1.spl1.length){
                 split2.spl2[j] = split1.spl1[j].split(";");
-                console.log(split2.spl2[j][0]);
-                console.log(split2.spl2[j][1]);
                 if (split2.spl2[j][1].includes("next")){
                   let urlNext = split2.spl2[j][0].replace(/[<>(\s)*]/g, '');
-                  console.log(urlNext);
                   url = urlNext;
                   hasNext = true;
-                  //console.log(hasNext, " has next")
-                  //console.log(url, " has next")
                   break;
                 } else {
                   hasNext = false;                
                 }
                 j++;
               }
-              //console.log(hasNext, "test");
               return response.json();
             }
             success.value = false;
@@ -127,7 +122,7 @@ watchEffect( () => {
               console.log("oh no (internet probably)!");
             }
           });  
-        //console.log(hasNext); because of promises hasNext = false here 
+        // console.log(hasNext); because of promises hasNext = false here 
       } while (hasNext);     
     });
 
