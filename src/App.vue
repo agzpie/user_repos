@@ -61,69 +61,67 @@ export default {
     const state = reactive({ data: [] });
     let success = ref(null);
     const userNameValidator = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
-    const split1 = reactive({ spl1: []});
-    const split2 = reactive({ spl2: []});
+    const split1 = reactive({ spl1: [] });
+    const split2 = reactive({ spl2: [] });
 
     /*
      * Check for input in the form and then fetch data
      */
-watchEffect( () => {
-      if (!userName.value) 
-        return;
+    async function myFetch(url) {
+      let hasNext = false;
+
+      do {
+        let response = await fetch(url);
+        if (!response.ok) {
+          success.value = false;
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        success.value = true;
+        // check response.headers for Link to get next page url
+        split1.spl1 = response.headers.get("Link").split(",");
+        let j = 0;
+        while (j < split1.spl1.length) {
+          split2.spl2[j] = split1.spl1[j].split(";");
+          console.log(split2.spl2[j][0]);
+          console.log(split2.spl2[j][1]);
+          if (split2.spl2[j][1].includes("next")) {
+            let urlNext = split2.spl2[j][0].replace(/[<>(\s)*]/g, "");
+            console.log(urlNext);
+            url = urlNext;
+            hasNext = true;
+            break;
+          } else {
+            hasNext = false;
+          }
+          j++;
+        }
+
+        // second .then
+        let myData = await response.json();
+        state.data.push(...myData);
+        console.log("data", myData);
+        name.value = "";
+      } while (hasNext);
+    }
+
+    watchEffect(() => {
+      if (!userName.value) return;
 
       if (!userNameValidator.test(userName.value)) {
         console.log("Username has invalid characters");
         return;
       }
-
-      let hasNext = false;
       state.data = [];
-      do {
-        let url = `https://api.github.com/users/${userName.value}/repos?per_page=30`;
-        fetch(url)
-          .then((response) => {
-            if (response.ok) {
-              success.value = true;
-              // check response.headers for Link to get next page url
-              let getLink = response.headers.get('Link');
-              if(getLink == null) {
-                return response.json();
-              }
-              split1.spl1 = getLink.split(",");
-            
-              let j = 0;
-              while(j < split1.spl1.length){
-                split2.spl2[j] = split1.spl1[j].split(";");
-                if (split2.spl2[j][1].includes("next")){
-                  let urlNext = split2.spl2[j][0].replace(/[<>(\s)*]/g, '');
-                  url = urlNext;
-                  hasNext = true;
-                  break;
-                } else {
-                  hasNext = false;                
-                }
-                j++;
-              }
-              return response.json();
-            }
-            success.value = false;
-            return Promise.reject(response);
-          })
-          .then((data) => {
-            state.data.push(...data);
-            console.log("data", data);
-            name.value = "";
-          })
-          .catch((err) => {
-            if (err.status == 404) {
-              console.log("User not found");
-            } else {
-              console.log(err.message);
-              console.log("oh no (internet probably)!");
-            }
-          });  
-        // console.log(hasNext); because of promises hasNext = false here 
-      } while (hasNext);     
+      let url = `https://api.github.com/users/${userName.value}/repos?per_page=20`; // 20 on page just for dev & testing
+
+      myFetch(url).catch((err) => {
+        if (err.status == 404) {
+          console.log("User not found");
+        } else {
+          console.log(err.message);
+          console.log("oh no (internet probably)!");
+        }
+      });
     });
 
     // Sort list by star count
@@ -131,6 +129,7 @@ watchEffect( () => {
       if (state.data == 0) {
         return [];
       }
+      console.log("Repo count = " + state.data.length);
       return [...state.data].sort((a, b) => {
         return a.stargazers_count < b.stargazers_count ? 1 : -1;
       });
@@ -144,6 +143,7 @@ watchEffect( () => {
       ListElement,
       ...toRefs(state),
       orderedList,
+      myFetch,
     };
   },
 };

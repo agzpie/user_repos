@@ -2,7 +2,7 @@
     <div>
         <hr>
         <p class="repo-header">
-            <span class="repo-name">{{ repositoryName }}</span>
+            <span class="repo-name"> {{ repositoryName }} </span>
             &ensp;
             <svg class="icon" width="15" height="13" viewBox="0 0 15 14" xmlns="http://www.w3.org/2000/svg">
                 <path class="icon" d="M7.5 1L9.33389 4.97587L13.6819 5.49139L10.4673 8.46413L11.3206 12.7586L7.5 10.62L3.6794 12.7586L4.5327 8.46413L1.31813 5.49139L5.66611 4.97587L7.5 1Z" stroke-width="1.2" stroke-linejoin="round"/>
